@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using uk_500.Database;
 
 namespace uk_500
 {
@@ -23,6 +24,18 @@ namespace uk_500
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void ImportCSV_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.Filter = "Table (.csv)|*.csv"; // Filter files by extension
+
+            bool? result = dlg.ShowDialog();
+            if (result == true)
+            {
+                PeopleRepository.ImportCSV(dlg.FileName);
+            }
         }
     }
 }
