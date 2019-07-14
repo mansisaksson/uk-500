@@ -17,74 +17,66 @@ namespace uk_500.Database
         private static string Table = "Person";
         private static string ConnectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
 
-        public static void ImportCSV(string filepath)
+        public async static Task ImportCSV(string filepath)
         {
-            using (TextFieldParser parser = new TextFieldParser(filepath))
+            List<PersonModel> people = await Task.Run(() =>
             {
-                parser.TextFieldType = FieldType.Delimited;
-                parser.SetDelimiters(",");
-
-                string[] PropertyNames = parser.ReadFields();
-
-                List<PersonModel> people = new List<PersonModel>();
-                while (!parser.EndOfData)
+                List<PersonModel> loadedPeople = new List<PersonModel>();
+                using (TextFieldParser parser = new TextFieldParser(filepath))
                 {
-                    string[] fields = parser.ReadFields();
-                    if (fields.Length > 0)
+                    parser.TextFieldType = FieldType.Delimited;
+                    parser.SetDelimiters(",");
+
+                    string[] PropertyNames = parser.ReadFields();
+
+                    while (!parser.EndOfData)
                     {
-                        PersonModel person = new PersonModel();
-                        for (int i = 0; i < fields.Length; i++)
+                        string[] fields = parser.ReadFields();
+                        if (fields.Length > 0)
                         {
-                            FieldInfo field = typeof(PersonModel).GetField(PropertyNames[i]);
-                            if (field != null)
+                            PersonModel person = new PersonModel();
+                            for (int i = 0; i < fields.Length; i++)
                             {
-                                field.SetValue(person, fields[i]);
+                                var propertyInfo = typeof(PersonModel).GetProperty(PropertyNames[i]);
+                                if (propertyInfo != null)
+                                {
+                                    propertyInfo.SetValue(person, fields[i]);
+                                }
                             }
+                            loadedPeople.Add(person);
                         }
-                        people.Add(person);
                     }
                 }
-            }
-
-            // TODO: Insert into Database
+                return loadedPeople;
+            });
+            
+            if (people.Count > 0)
+                await InsertPeople(people);
         }
 
         public static async Task<List<PersonModel>> ListEntries()
         {
             using (var cnn = new SQLiteConnection(ConnectionString))
             {
-                var output = cnn.Query<PersonModel>($"SELECT * FROM ${Table}", new DynamicParameters());
+                var output = await cnn.QueryAsync<PersonModel>($"SELECT * FROM ${Table}", new DynamicParameters());
                 return output.ToList();
             }
         }
 
-        public static async Task SavePerson(PersonModel Person)
+        public static async Task InsertPeople(List<PersonModel> People)
         {
-            // TODO: Decide on how to insert people into the db
-
+            // TODO: Really inefficient way of adding people to the database, look if there's any "bulk add" support in Dapper
             using (var cnn = new SQLiteConnection(ConnectionString))
             {
-                var output = cnn.Query<PersonModel>($"SELECT * FROM ${Table} WHERE uid=@uid", Person);
-                if (output.ToList().Count > 0)
-                {
-                    
-                }
-                else
-                {
-                    string query = $"INSERT INTO {Table} (" +
-                        "first_name, " +
-                        "last_name, " +
-                        "company_name, " +
-                        "address, " +
-                        "postal, " +
-                        "phone1, " +
-                        "phone2, " +
-                        "email, " +
-                        "web" +
-                    ")";
+                Console.WriteLine("Ingesting data into database...");
 
-                    cnn.Execute(query, Person);
-                }
+                await cnn.ExecuteAsync($"INSERT INTO {Table} " +
+                    "(first_name, last_name, company_name, address, postal, phone1, phone2, email, web)" +
+                    "VALUES(@first_name, @last_name, @company_name, @address, @postal, @phone1, @phone2, @email, @web)",
+                    People
+                );
+
+                Console.WriteLine("Done");
             }
         }
     }

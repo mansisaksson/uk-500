@@ -26,7 +26,7 @@ namespace uk_500
             InitializeComponent();
         }
 
-        private void ImportCSV_Click(object sender, RoutedEventArgs e)
+        private async void ImportCSV_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.Filter = "Table (.csv)|*.csv"; // Filter files by extension
@@ -34,7 +34,9 @@ namespace uk_500
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                PeopleRepository.ImportCSV(dlg.FileName);
+                ImportCSV.IsEnabled = false;
+                await PeopleRepository.ImportCSV(dlg.FileName);
+                ImportCSV.IsEnabled = true;
             }
         }
     }
