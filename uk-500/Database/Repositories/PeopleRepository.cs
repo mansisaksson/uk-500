@@ -5,7 +5,6 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using uk_500.Database.Repositories;
 using Dapper;
 using Microsoft.VisualBasic.FileIO;
 using System.Reflection;
@@ -14,7 +13,6 @@ namespace uk_500.Database
 {
     class PeopleRepository
     {
-        private static string Table = "Person";
         private static string ConnectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
 
         public async static Task ImportCSV(string filepath)
@@ -58,7 +56,7 @@ namespace uk_500.Database
         {
             using (var cnn = new SQLiteConnection(ConnectionString))
             {
-                var output = await cnn.QueryAsync<PersonModel>($"SELECT * FROM ${Table}", new DynamicParameters());
+                var output = await cnn.QueryAsync<PersonModel>("SELECT * FROM People", new DynamicParameters());
                 return output.ToList();
             }
         }
@@ -70,7 +68,7 @@ namespace uk_500.Database
             {
                 Console.WriteLine("Ingesting data into database...");
 
-                await cnn.ExecuteAsync($"INSERT INTO {Table} " +
+                await cnn.ExecuteAsync("INSERT INTO People " +
                     "(first_name, last_name, company_name, address, postal, phone1, phone2, email, web)" +
                     "VALUES(@first_name, @last_name, @company_name, @address, @postal, @phone1, @phone2, @email, @web)",
                     People
