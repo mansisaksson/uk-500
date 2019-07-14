@@ -39,5 +39,12 @@ namespace uk_500
                 ImportCSV.IsEnabled = true;
             }
         }
+
+        private async void CrawlPostcodes_Click(object sender, RoutedEventArgs e)
+        {
+            CrawlPostcodes.IsEnabled = false;
+            await PostcodesCrawler.StartCrawler();
+            CrawlPostcodes.IsEnabled = true;
+        }
     }
 }
