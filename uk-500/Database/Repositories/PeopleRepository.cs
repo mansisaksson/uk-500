@@ -63,14 +63,20 @@ namespace uk_500.Database
 
         public static async Task InsertPeople(List<PersonModel> People)
         {
-            // TODO: Really inefficient way of adding people to the database, look if there's any "bulk add" support in Dapper
+            // TODO: How well does this work with larger data sets?
             using (var cnn = new SQLiteConnection(ConnectionString))
             {
                 Console.WriteLine("Ingesting data into database...");
 
+                string valuesString = "";
+                for (int i = 0; i < People.Count; i++)
+                {
+                    valuesString += "(@first_name, @last_name, @company_name, @address, @postal, @phone1, @phone2, @email, @web)";
+                    valuesString += People.Count - 1 == i ? "" : ",\n";
+                }
                 await cnn.ExecuteAsync("INSERT INTO People " +
                     "(first_name, last_name, company_name, address, postal, phone1, phone2, email, web)" +
-                    "VALUES(@first_name, @last_name, @company_name, @address, @postal, @phone1, @phone2, @email, @web)",
+                    " VALUES " + valuesString,
                     People
                 );
 
