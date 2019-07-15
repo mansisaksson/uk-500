@@ -46,5 +46,10 @@ namespace uk_500
             await PostcodesCrawler.StartCrawler();
             CrawlPostcodes.IsEnabled = true;
         }
+
+        private async void BuildMap_Click(object sender, RoutedEventArgs e)
+        {
+            await UKMap.RebuildMap();
+        }
     }
 }

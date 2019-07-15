@@ -7,7 +7,14 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <Button x:Name="ImportCSV" Content="Import People CSV" HorizontalAlignment="Left" Margin="137,145,0,0" VerticalAlignment="Top" Width="144" Height="65" Click="ImportCSV_Click"/>
-        <Button x:Name="CrawlPostcodes" Content="Crawl Postcodes" HorizontalAlignment="Left" Margin="513,145,0,0" VerticalAlignment="Top" Width="144" Height="65" Click="CrawlPostcodes_Click"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.2*" />
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+        <Button Grid.Column="0" x:Name="ImportCSV" Content="Import People CSV" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Top" Height="28" Click="ImportCSV_Click"/>
+        <Button Grid.Column="0" x:Name="CrawlPostcodes" Content="Crawl Postcodes" HorizontalAlignment="Stretch" Margin="0,28,0,0" VerticalAlignment="Top" Height="28" Click="CrawlPostcodes_Click"/>
+        <Button Grid.Column="0" x:Name="BuildMap" Content="Build Map" HorizontalAlignment="Stretch" Margin="0,56,0,0" VerticalAlignment="Top" Height="28" Click="BuildMap_Click"/>
+
+        <local:Map x:Name="UKMap" Grid.Column="1"/>
     </Grid>
 </Window>

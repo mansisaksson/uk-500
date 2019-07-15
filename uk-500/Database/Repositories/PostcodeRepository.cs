@@ -22,6 +22,15 @@ namespace uk_500.Database.Repositories
             }
         }
 
+        public static async Task<List<PostcodeModel>> ListPostcodes()
+        {
+            using (var cnn = new SQLiteConnection(ConnectionString))
+            {
+                var output = await cnn.QueryAsync<PostcodeModel>("SELECT * FROM Postcodes", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
         /*
          * TODO: There exists a bulk insert package that could be useful here
          * This is reasonably fast however so probably not needed, unless really slow on large data-sets.
