@@ -22,29 +22,29 @@ namespace uk_500.Database
 
     class PostcodeModel
     {
-        string postcode;
-        int quality;
-        int eastings;
-        int northings;
-        string country;
-        string nhs_ha;
-        double longitude;
-        double latitude;
-        string european_electoral_region;
-        string primary_care_trust;
-        string region;
-        string lsoa;
-        string msoa;
-        string incode;
-        string outcode;
-        string parliamentary_constituency;
-        string admin_district;
-        string parish;
-        string admin_county;
-        string admin_ward;
-        string ced;
-        string ccg;
-        string nuts;
+        public string postcode { get; set; }
+        public int quality { get; set; }
+        public int eastings { get; set; }
+        public int northings { get; set; }
+        public string country { get; set; }
+        public string nhs_ha { get; set; }
+        public double longitude { get; set; }
+        public double latitude { get; set; }
+        public string european_electoral_region { get; set; }
+        public string primary_care_trust { get; set; }
+        public string region { get; set; }
+        public string lsoa { get; set; }
+        public string msoa { get; set; }
+        public string incode { get; set; }
+        public string outcode { get; set; }
+        public string parliamentary_constituency { get; set; }
+        public string admin_district { get; set; }
+        public string parish { get; set; }
+        public string admin_county { get; set; }
+        public string admin_ward { get; set; }
+        public string ced { get; set; }
+        public string ccg { get; set; }
+        public string nuts { get; set; }
         //PostcodeCodesModel codes;
     }
 }

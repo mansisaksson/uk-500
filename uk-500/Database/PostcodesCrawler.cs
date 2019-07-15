@@ -1,16 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data.SQLite;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Dapper;
 using System.Web.Script.Serialization;
+using uk_500.Database.Repositories;
 
 namespace uk_500.Database
 {
+    /* 
+     * Helper classes for deserializing the HTTP response. 
+     * There is probably a prettier way of doing this where I don't need these classes.
+     */
+    class PostcodeResultModel
+    {
+        public string query { get; set; }
+        public PostcodeModel result { get; set; }
+    }
+
+    class PostcodesResponseModel
+    {
+        public int status { get; set; }
+        public List<PostcodeResultModel> result { get; set; }
+    }
+
     /* 
      * The idea here is to create a crawler that scrapes the postcode data and places it
      * in a seperate table. This data is not likley to change and multiple people might share the same postcode.
@@ -21,27 +36,38 @@ namespace uk_500.Database
 
         static readonly HttpClient client = new HttpClient();
 
-        private static async Task GetPostcodeData(string[] postcodes)
+        private static async Task<List<PostcodeModel>> GetPostcodeData(string[] postcodes)
         {
-            try
+            if (postcodes.Length > 0)
             {
-                var jObject = new
+                try
                 {
-                    filter = "",
-                    postcodes = postcodes // Accepts up to 100 postcodes.
-                };
-                var stringContent = new StringContent(new JavaScriptSerializer().Serialize(jObject), Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await client.PostAsync("http://api.postcodes.io/postcodes", stringContent);
-                
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-                
-                Console.WriteLine(responseBody);
+                    Console.WriteLine("Pulling postcode information...");
+
+                    var jObject = new
+                    {
+                        filter = "",
+                        postcodes = postcodes // Accepts up to 100 postcodes.
+                    };
+                    var stringContent = new StringContent(new JavaScriptSerializer().Serialize(jObject), Encoding.UTF8, "application/json");
+                    HttpResponseMessage response = await client.PostAsync("http://api.postcodes.io/postcodes", stringContent);
+
+                    response.EnsureSuccessStatusCode();
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    PostcodesResponseModel responseObject = new JavaScriptSerializer().Deserialize<PostcodesResponseModel>(responseBody);
+                    return responseObject.result.Where(x => x.result != null).Select(x => x.result).ToList();
+                }
+                catch (HttpRequestException e)
+                {
+                    Console.WriteLine("\nException Caught!");
+                    Console.WriteLine("Message :{0} ", e.Message);
+                    return new List<PostcodeModel>();
+                }
             }
-            catch (HttpRequestException e)
+            else
             {
-                Console.WriteLine("\nException Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
+                return new List<PostcodeModel>();
             }
         }
 
@@ -56,29 +82,20 @@ namespace uk_500.Database
         public static async Task StartCrawler()
         {
             /*
-             * TODO: This works qute well for 500ish but I doubt it would be a good idea to not to
-             * add a delay of some sort inbetween the different HTTP requiests
+             * TODO: This works quite well for 500ish but I doubt it would be a good idea not to
+             * add a delay of some sort inbetween the different HTTP reqests
              */
-            using (var cnn = new SQLiteConnection(ConnectionString))
+            var postalList = await PostcodeRepository.GetNewPostcodes();
+            var BufferedLists = SplitList(postalList, 100);
+            var CrawlTasks = new List<Task<List<PostcodeModel>>>();
+            foreach (var list in BufferedLists)
             {
-                var output = await cnn.QueryAsync(
-                    "SELECT postal " +
-                    "FROM People " +
-                    "WHERE postal NOT IN (SELECT postcode FROM Postcodes)"
-                );
-
-                var postalList = output.ToList().Select<dynamic, string>(x => x.postal).ToList();
-                var BufferedLists = SplitList(postalList, 100);
-                var CrawlTasks = new List<Task>();
-                foreach (var list in BufferedLists)
-                {
-                    CrawlTasks.Add(GetPostcodeData(list.ToArray()));
-                }
-
-                await Task.WhenAll(CrawlTasks);
-
-                Console.WriteLine("Done");
+                CrawlTasks.Add(GetPostcodeData(list.ToArray()));
             }
+
+            var results = await Task.WhenAll(CrawlTasks);
+
+            await PostcodeRepository.InsertPostcodes(results.SelectMany(x => x).ToList());
         }
     }
 }

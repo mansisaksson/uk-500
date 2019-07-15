@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Microsoft.VisualBasic.FileIO;
 using System.Reflection;
+using System.Dynamic;
 
 namespace uk_500.Database
 {
@@ -61,27 +62,67 @@ namespace uk_500.Database
             }
         }
 
+        public static IEnumerable<List<T>> SplitList<T>(List<T> locations, int nSize)
+        {
+            for (int i = 0; i < locations.Count; i += nSize)
+            {
+                yield return locations.GetRange(i, Math.Min(nSize, locations.Count - i));
+            }
+        }
+
+        /*
+         * TODO: There exists a bulk insert package that could be useful here
+         * This is reasonably fast however so probably not needed, unless really slow on large data-sets.
+         */
         public static async Task InsertPeople(List<PersonModel> People)
         {
-            // TODO: How well does this work with larger data sets?
-            using (var cnn = new SQLiteConnection(ConnectionString))
+            await Task.Run(async () => // Might be a bit unnecessary to do this async?
             {
-                Console.WriteLine("Ingesting data into database...");
-
-                string valuesString = "";
-                for (int i = 0; i < People.Count; i++)
+                using (var cnn = new SQLiteConnection(ConnectionString))
                 {
-                    valuesString += "(@first_name, @last_name, @company_name, @address, @postal, @phone1, @phone2, @email, @web)";
-                    valuesString += People.Count - 1 == i ? "" : ",\n";
-                }
-                await cnn.ExecuteAsync("INSERT INTO People " +
-                    "(first_name, last_name, company_name, address, postal, phone1, phone2, email, web)" +
-                    " VALUES " + valuesString,
-                    People
-                );
+                    var PropertiesList = typeof(PersonModel).GetProperties().OrderBy(x => x.MetadataToken);
+                    var BufferedLists = SplitList(People, 999 / PropertiesList.Count()); // There is a limit of 999 variables at a time
+                    foreach (var chunk in BufferedLists)
+                    {
+                        Console.WriteLine($"Inserting {chunk.Count} people...");
 
-                Console.WriteLine("Done");
-            }
+                        var valuesString = new Func<int, string>((int index) =>
+                        {
+                            string buildingString = "(";
+                            foreach (var name in PropertiesList.Select(x => x.Name))
+                            {
+                                buildingString += "@" + name + "_" + index + ", ";
+                            }
+                            buildingString = buildingString.TrimEnd(new char[] { ',', ' ' });
+                            buildingString += ")";
+                            return buildingString;
+                        });
+
+                        var ParamsObject = new Func<ExpandoObject>(() =>
+                        {
+                            var exo = new ExpandoObject();
+                            for (int i = 0; i < chunk.Count; i++)
+                            {
+                                foreach (var property in PropertiesList)
+                                {
+                                    var value = property.Name == "uid" ? null : property.GetValue(chunk[i]); // Auto-set by the DB
+                                    ((IDictionary<string, object>)exo).Add(property.Name + "_" + i, value);
+                                }
+                            }
+                            return exo;
+                        })();
+
+                        string sql = "INSERT INTO People " + "VALUES ";
+                        for (int i = 0; i < chunk.Count; i++)
+                        {
+                            sql += valuesString(i);
+                            sql += chunk.Count - 1 == i ? "" : ",\n";
+                        }
+
+                        await cnn.ExecuteAsync(sql, ParamsObject);
+                    }
+                }
+            });
         }
     }
 }
