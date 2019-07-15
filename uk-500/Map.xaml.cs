@@ -18,12 +18,20 @@ namespace uk_500
 {
     public partial class Map : UserControl
     {
-        private Dictionary<int, Ellipse> PointIdTable = new Dictionary<int, Ellipse>();
+        private Dictionary<long, Shape> PointIdTable = new Dictionary<long, Shape>();
 
+        private static int GrixWidth = 50;
+        private static int GrixHeight = 80;
+        private int[,] DensityGrid = new int[GrixWidth, GrixHeight];
 
         public Map()
         {
             InitializeComponent();
+        }
+
+        private static int Remap(int OldValue, int OldMin, int OldMax, int NewMax, int NewMin)
+        {
+            return (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin;
         }
 
         public async Task RebuildMap()
@@ -31,20 +39,48 @@ namespace uk_500
             ClearMap();
 
             var postcodes = await PostcodeRepository.ListPostcodes();
+            int[] Min = new int[2] { int.MaxValue, int.MaxValue };
+            int[] Max = new int[2] { int.MinValue, int.MinValue };
             foreach (var postcode in postcodes)
             {
-                int pointSize = 5;
-                float scale = 0.0005f;
+                Min[0] = Math.Min(postcode.eastings, Min[0]);
+                Min[1] = Math.Min(postcode.northings, Min[1]);
+                Max[0] = Math.Max(postcode.eastings, Max[0]);
+                Max[1] = Math.Max(postcode.northings, Max[1]);
+            }
 
-                Ellipse point = new Ellipse();
-                point.Height = pointSize;
-                point.Width = pointSize;
-                point.Fill = new SolidColorBrush(Colors.Red);
+            foreach (var postcode in postcodes)
+            {
+                int[] index = new int[2] {
+                    Remap(postcode.eastings, Min[0], Max[0], 0, GrixWidth - 1),
+                    Remap(postcode.northings, Min[1], Max[1], 0, GrixHeight - 1)
+                };
 
-                Canvas.SetRight(point, postcode.eastings * scale);
-                Canvas.SetBottom(point, (postcode.northings) * scale);
+                DensityGrid[index[0], index[1]]++;
 
-                MapCanvas.Children.Add(point);
+                long hashKey = (long)index[0] << 32 | index[1] & 0xFFFFFFFFL;
+                if (!PointIdTable.ContainsKey((long)index[0] << 32 | index[1] & 0xFFFFFFFFL))
+                {
+                    int rectSize = 7;
+
+                    Rectangle rect = new Rectangle();
+                    rect.Height = rectSize;
+                    rect.Width = rectSize;
+                    rect.Fill = new SolidColorBrush(Colors.Red);
+
+                    Canvas.SetLeft(rect, 20 + index[0] * rectSize);
+                    Canvas.SetTop(rect, 20 + index[1] * rectSize);
+
+                    MapCanvas.Children.Add(rect);
+                    PointIdTable.Add(hashKey, rect);
+                }
+
+                var PointColor = new Color();
+                PointColor.R = (byte)Math.Min(DensityGrid[index[0], index[1]] * 50, 255);
+                PointColor.G = 0;
+                PointColor.B = 0;
+                PointColor.A = 255;
+                PointIdTable[hashKey].Fill = new SolidColorBrush(PointColor);
             }
         }
 

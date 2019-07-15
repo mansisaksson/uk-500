@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:uk_500"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="720" Width="1280" ResizeMode="NoResize">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="0.2*" />
@@ -15,6 +15,6 @@
         <Button Grid.Column="0" x:Name="CrawlPostcodes" Content="Crawl Postcodes" HorizontalAlignment="Stretch" Margin="0,28,0,0" VerticalAlignment="Top" Height="28" Click="CrawlPostcodes_Click"/>
         <Button Grid.Column="0" x:Name="BuildMap" Content="Build Map" HorizontalAlignment="Stretch" Margin="0,56,0,0" VerticalAlignment="Top" Height="28" Click="BuildMap_Click"/>
 
-        <local:Map x:Name="UKMap" Grid.Column="1"/>
+        <local:Map x:Name="UKMap" Grid.Column="1" Margin="560,10,10,57"/>
     </Grid>
 </Window>
