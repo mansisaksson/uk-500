@@ -56,9 +56,10 @@ namespace uk_500
                 (int)Math.Round(Remap(person.latitude, 50.0, 60.0, (GridHeight - 1) * Scale, 0)));
         }
 
-        public void RebuildMap(double resolutionScale)
+        public async Task RebuildMap()
         {
-            Scale = resolutionScale;
+            if (!double.TryParse(ResolutionScale.Text, out Scale))
+                Scale = 1;
 
             ClearMap();
 
@@ -83,6 +84,7 @@ namespace uk_500
                     
                     Canvas.SetLeft(tile.RenderTile, 100 + index.x * RectSize / Scale);
                     Canvas.SetTop(tile.RenderTile, 75 + index.y * RectSize / Scale);
+                    Canvas.SetZIndex(tile.RenderTile, -10);
 
                     MapCanvas.Children.Add(tile.RenderTile);
                 }
@@ -92,12 +94,18 @@ namespace uk_500
                 tile.accumulatedLng += person.longitude;
             }
 
+            if (WorldTileTable.Count < 2)
+                return;
+
+            /* Semi-ugly mix-code for displaying density scale */
             int MaxDensity = WorldTileTable.Max(x => x.Value.Density);
+            int AvgDensity = (int)WorldTileTable.Average(x => x.Value.Density);
+            int MedianDensity = WorldTileTable.Values.OrderBy(x => x.Density).ToList().ElementAt(WorldTileTable.Count / 2).Density;
 
             foreach (var tile in WorldTileTable)
             {
                 var PointColor = new Color();
-                PointColor.R = (byte)Remap(tile.Value.Density, 0, MaxDensity, 0, 255);
+                PointColor.R = (byte)Remap(tile.Value.Density, 0, (MedianDensity + AvgDensity + MaxDensity) / 3, 0, 255);
                 PointColor.G = 0;
                 PointColor.B = 0;
                 PointColor.A = 255;
@@ -119,12 +127,7 @@ namespace uk_500
         public void AddPeople(List<PersonLocation> People)
         {
             this.People = this.People.Union(People).ToList();
-
-            double resScale = 100;
-            if (!double.TryParse(ResolutionScale.Text, out resScale))
-                resScale = 100;
-
-            RebuildMap(Math.Min(Math.Max(resScale, 0.1), 10));
+            RebuildMap();
         }
 
         // Haversine distance stolen from: https://stackoverflow.com/questions/41621957/a-more-efficient-haversine-function
@@ -147,6 +150,11 @@ namespace uk_500
             {
                 
             }
+        }
+
+        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            RebuildMap();
         }
     }
 }

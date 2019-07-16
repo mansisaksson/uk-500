@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -46,10 +47,13 @@ namespace uk_500
             await PostcodesCrawler.StartCrawler();
             CrawlPostcodes.IsEnabled = true;
         }
-
+        
         private async void RunClustering_Click(object sender, RoutedEventArgs e)
         {
-            UKMap.AddPeople(await PeopleRepository.GetAllPeopleLocations());
+            LoadMapData.IsEnabled = false;
+            var people = await PeopleRepository.GetAllPeopleLocations();
+            UKMap.AddPeople(people);
+            LoadMapData.IsEnabled = true;
         }
     }
 }
