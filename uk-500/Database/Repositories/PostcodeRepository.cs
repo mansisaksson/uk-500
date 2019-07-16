@@ -37,52 +37,31 @@ namespace uk_500.Database.Repositories
          */
         public static async Task InsertPostcodes(List<PostcodeModel> Postcodes)
         {
-            await Task.Run(async () => // Might be a bit unnecessary to do this async?
+            using (var cnn = new SQLiteConnection(ConnectionString))
             {
-                using (var cnn = new SQLiteConnection(ConnectionString))
+                Console.WriteLine($"Inserting {Postcodes.Count} postcodes...");
+
+                var valuesString = new Func<bool, string>((bool addAtSymbol) =>
                 {
                     var PropertiesList = typeof(PostcodeModel).GetProperties().OrderBy(x => x.MetadataToken);
-                    var BufferedLists = SplitList(Postcodes, 999 / PropertiesList.Count()); // There is a limit of about 999 variables at a time
-                    foreach (var chunk in BufferedLists)
+
+                    string buildingString = "(";
+                    foreach (var name in PropertiesList.Select(x => x.Name))
                     {
-                        Console.WriteLine($"Inserting {chunk.Count} postcodes...");
-
-                        var valuesString = new Func<int, string>((int index) =>
-                        {
-                            string buildingString = "(";
-                            foreach (var name in PropertiesList.Select(x => x.Name))
-                            {
-                                buildingString += "@" + name + "_" + index + ", ";
-                            }
-                            buildingString = buildingString.TrimEnd(new char[] { ',', ' ' });
-                            buildingString += ")";
-                            return buildingString;
-                        });
-
-                        var ParamsObject = new Func<ExpandoObject>(() =>
-                        {
-                            var exo = new ExpandoObject();
-                            for (int i = 0; i < chunk.Count; i++)
-                            {
-                                foreach (var property in PropertiesList)
-                                {
-                                    ((IDictionary<string, object>)exo).Add(property.Name + "_" + i, property.GetValue(chunk[i]));
-                                }
-                            }
-                            return exo;
-                        })();
-
-                        string sql = "INSERT INTO Postcodes " + "VALUES ";
-                        for (int i = 0; i < chunk.Count; i++)
-                        {
-                            sql += valuesString(i);
-                            sql += chunk.Count - 1 == i ? "" : ",\n";
-                        }
-
-                        await cnn.ExecuteAsync(sql, ParamsObject);
+                        buildingString += (addAtSymbol ? "@" : "") + name + ", ";
                     }
-                }
-            });
+                    buildingString = buildingString.TrimEnd(new char[] { ',', ' ' });
+                    buildingString += ")";
+                    return buildingString;
+                });
+
+                cnn.Open();
+                var trans = cnn.BeginTransaction();
+                await cnn.ExecuteAsync($"INSERT INTO Postcodes {valuesString(false)} VALUES {valuesString(true)}", Postcodes, transaction: trans);
+                trans.Commit();
+
+                Console.WriteLine("Done.");
+            }
         }
 
         /*

@@ -98,6 +98,8 @@ namespace uk_500.Database
             int requestBatchSize = 5;
             int index = 0;
             List<List<PostcodeModel>> crawlResult = new List<List<PostcodeModel>>();
+
+            List<Task> insertTasks = new List<Task>();
             while (index < BufferedLists.Count())
             {
                 var CrawlTasks = new List<Task<List<PostcodeModel>>>();
@@ -110,13 +112,11 @@ namespace uk_500.Database
                         break;
                 }
 
-                foreach (var result in await Task.WhenAll(CrawlTasks))
-                {
-                    crawlResult.Add(result);
-                } 
+                var resultList = (await Task.WhenAll(CrawlTasks)).SelectMany(x => x).ToList();
+                insertTasks.Add(PostcodeRepository.InsertPostcodes(resultList));
             }
-            
-            await PostcodeRepository.InsertPostcodes(crawlResult.SelectMany(x => x).ToList());
+
+            await Task.WhenAll(insertTasks);
         }
     }
 }
