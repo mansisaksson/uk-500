@@ -6,9 +6,28 @@ using System.Threading.Tasks;
 
 namespace uk_500.Database
 {
+    public class PersonLocation : IEquatable<PersonLocation>
+    {
+        public long uid { get; set; }
+        public long eastings { get; set; }
+        public long northings { get; set; }
+        public double longitude { get; set; }
+        public double latitude { get; set; }
+
+        public bool Equals(PersonLocation other)
+        {
+            return uid.Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return uid.GetHashCode();
+        }
+    }
+
     public class PersonModel
     {
-        public int uid { get; set; } = -1;
+        public long uid { get; set; } = -1;
         public string first_name { get; set; }
         public string last_name { get; set; }
         public string company_name { get; set; }

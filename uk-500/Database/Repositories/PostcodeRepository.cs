@@ -98,7 +98,7 @@ namespace uk_500.Database.Repositories
                     "WHERE postal NOT IN (SELECT postcode FROM Postcodes)"
                 );
 
-                return output.ToList().Select<dynamic, string>(x => x.postal).ToList();
+                return output.Select<dynamic, string>(x => x.postal).ToList();
             }
         }
     }

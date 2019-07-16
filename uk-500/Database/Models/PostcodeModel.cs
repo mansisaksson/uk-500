@@ -23,9 +23,9 @@ namespace uk_500.Database
     class PostcodeModel
     {
         public string postcode { get; set; }
-        public int quality { get; set; }
-        public int eastings { get; set; }
-        public int northings { get; set; }
+        public long quality { get; set; }
+        public long eastings { get; set; }
+        public long northings { get; set; }
         public string country { get; set; }
         public string nhs_ha { get; set; }
         public double longitude { get; set; }

@@ -53,11 +53,11 @@ namespace uk_500.Database
                 await InsertPeople(people);
         }
 
-        public static async Task<List<PersonModel>> ListEntries()
+        public static async Task<List<PersonModel>> ListPeople()
         {
             using (var cnn = new SQLiteConnection(ConnectionString))
             {
-                var output = await cnn.QueryAsync<PersonModel>("SELECT * FROM People", new DynamicParameters());
+                var output = await cnn.QueryAsync<PersonModel>("SELECT * FROM People");
                 return output.ToList();
             }
         }
@@ -123,6 +123,16 @@ namespace uk_500.Database
                     }
                 }
             });
+        }
+
+        public static async Task<List<PersonLocation>> GetAllPeopleLocations()
+        {
+            using (var cnn = new SQLiteConnection(ConnectionString))
+            {
+                var sql = "SELECT People.uid, Postcodes.longitude, Postcodes.latitude, Postcodes.eastings, Postcodes.northings FROM People INNER JOIN Postcodes ON People.postal = Postcodes.postcode";
+                var output = await cnn.QueryAsync<PersonLocation>(sql);
+                return output.ToList();
+            }
         }
     }
 }

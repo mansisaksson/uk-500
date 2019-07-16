@@ -47,9 +47,9 @@ namespace uk_500
             CrawlPostcodes.IsEnabled = true;
         }
 
-        private async void BuildMap_Click(object sender, RoutedEventArgs e)
+        private async void RunClustering_Click(object sender, RoutedEventArgs e)
         {
-            await UKMap.RebuildMap();
+            UKMap.AddPeople(await PeopleRepository.GetAllPeopleLocations());
         }
     }
 }

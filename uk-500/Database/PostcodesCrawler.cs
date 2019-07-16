@@ -44,6 +44,13 @@ namespace uk_500.Database
                 {
                     Console.WriteLine("Pulling postcode information...");
 
+                    Console.Write("[ ");
+                    foreach (var item in postcodes)
+                    {
+                        Console.Write(item + ", ");
+                    }
+                    Console.WriteLine("]");
+
                     var jObject = new
                     {
                         filter = "",
@@ -86,16 +93,30 @@ namespace uk_500.Database
              * add a delay of some sort inbetween the different HTTP reqests
              */
             var postalList = await PostcodeRepository.GetNewPostcodes();
-            var BufferedLists = SplitList(postalList, 100);
-            var CrawlTasks = new List<Task<List<PostcodeModel>>>();
-            foreach (var list in BufferedLists)
+            var BufferedLists = SplitList(postalList, 100).ToList();
+
+            int requestBatchSize = 5;
+            int index = 0;
+            List<List<PostcodeModel>> crawlResult = new List<List<PostcodeModel>>();
+            while (index < BufferedLists.Count())
             {
-                CrawlTasks.Add(GetPostcodeData(list.ToArray()));
+                var CrawlTasks = new List<Task<List<PostcodeModel>>>();
+                for (; index < BufferedLists.Count(); index++)
+                {
+                    CrawlTasks.Add(GetPostcodeData(BufferedLists[index].ToArray()));
+                    index++;
+
+                    if ((index % requestBatchSize) == 0)
+                        break;
+                }
+
+                foreach (var result in await Task.WhenAll(CrawlTasks))
+                {
+                    crawlResult.Add(result);
+                } 
             }
-
-            var results = await Task.WhenAll(CrawlTasks);
-
-            await PostcodeRepository.InsertPostcodes(results.SelectMany(x => x).ToList());
+            
+            await PostcodeRepository.InsertPostcodes(crawlResult.SelectMany(x => x).ToList());
         }
     }
 }

@@ -13,7 +13,7 @@
         </Grid.ColumnDefinitions>
         <Button Grid.Column="0" x:Name="ImportCSV" Content="Import People CSV" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Top" Height="28" Click="ImportCSV_Click"/>
         <Button Grid.Column="0" x:Name="CrawlPostcodes" Content="Crawl Postcodes" HorizontalAlignment="Stretch" Margin="0,28,0,0" VerticalAlignment="Top" Height="28" Click="CrawlPostcodes_Click"/>
-        <Button Grid.Column="0" x:Name="BuildMap" Content="Build Map" HorizontalAlignment="Stretch" Margin="0,56,0,0" VerticalAlignment="Top" Height="28" Click="BuildMap_Click"/>
+        <Button Grid.Column="0" x:Name="RunClustering" Content="Run Clustering" HorizontalAlignment="Stretch" Margin="0,56,0,0" VerticalAlignment="Top" Height="28" Click="RunClustering_Click"/>
 
         <local:Map x:Name="UKMap" Grid.Column="1" Margin="560,10,10,57"/>
     </Grid>
