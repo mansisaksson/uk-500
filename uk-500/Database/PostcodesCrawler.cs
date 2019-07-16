@@ -32,8 +32,6 @@ namespace uk_500.Database
      */
     class PostcodesCrawler
     {
-        private static string ConnectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
-
         static readonly HttpClient client = new HttpClient();
 
         private static async Task<List<PostcodeModel>> GetPostcodeData(string[] postcodes)

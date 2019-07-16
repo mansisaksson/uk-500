@@ -9,12 +9,13 @@ using Dapper;
 using Microsoft.VisualBasic.FileIO;
 using System.Reflection;
 using System.Dynamic;
+using System.Windows;
 
 namespace uk_500.Database
 {
     class PeopleRepository
     {
-        private static string ConnectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
+        private static string ConnectionString => ConfigurationManager.ConnectionStrings[(string)Application.Current.Properties["database"]].ConnectionString;
 
         public async static Task ImportCSV(string filepath)
         {

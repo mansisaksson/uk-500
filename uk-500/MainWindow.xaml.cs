@@ -25,6 +25,8 @@ namespace uk_500
         public MainWindow()
         {
             InitializeComponent();
+
+            Application.Current.Properties["database"] = "UK500";
         }
 
         private async void ImportCSV_Click(object sender, RoutedEventArgs e)
@@ -54,6 +56,18 @@ namespace uk_500
             var people = await PeopleRepository.GetAllPeopleLocations();
             UKMap.AddPeople(people);
             LoadMapData.IsEnabled = true;
+        }
+
+        private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            Label lbi = DatabaseSelection.SelectedItem as Label;
+
+            if (lbi != null)
+            {
+                DatabaseSelection.SelectedItem = lbi;
+                Application.Current.Properties["database"] = lbi.Name;
+                Console.WriteLine($"Database {lbi.Name} selected");
+            }
         }
     }
 }

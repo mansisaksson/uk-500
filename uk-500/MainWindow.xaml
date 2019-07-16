@@ -16,5 +16,10 @@
         <Button Grid.Column="0" x:Name="LoadMapData" Content="Load Map Data" HorizontalAlignment="Stretch" Margin="0,56,0,0" VerticalAlignment="Top" Height="28" Click="RunClustering_Click"/>
 
         <local:Map x:Name="UKMap" Grid.Column="1" Margin="560,10,10,57"/>
+        <ListBox x:Name="DatabaseSelection" Grid.Column="0" Height="100" Margin="0,534,0,0" VerticalAlignment="Bottom" SelectionChanged="ListBox_SelectionChanged">
+            <Label x:Name="UK500" Content="UK-500" Height="29" Width="194" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Label x:Name="UK10K" Content="UK-10K" Height="26" Width="193" />
+            <Label x:Name="UK1M" Content="UK-1M" Height="26" Width="193" />
+        </ListBox>
     </Grid>
 </Window>

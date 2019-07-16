@@ -6,13 +6,14 @@ using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using Dapper;
 
 namespace uk_500.Database.Repositories
 {
     class PostcodeRepository
     {
-        private static string ConnectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
+        private static string ConnectionString => ConfigurationManager.ConnectionStrings[(string)Application.Current.Properties["database"]].ConnectionString;
 
         public static IEnumerable<List<T>> SplitList<T>(List<T> locations, int nSize)
         {
