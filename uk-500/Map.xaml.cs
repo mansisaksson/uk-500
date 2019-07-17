@@ -25,20 +25,17 @@ namespace uk_500
 
         public double avgLat => accumulatedLat / Density;
         public double avgLng => accumulatedLng / Density;
-
-        public Rectangle RenderTile;
     }
 
     public partial class Map : UserControl
     {
-        private static int GridWidth = 62;
-        private static int GridHeight = 100;
-
-        private Dictionary<long, WorldTile> WorldTileTable = new Dictionary<long, WorldTile>();
-        private List<PersonLocation> People = new List<PersonLocation>();
-
         private double Scale = 1.0;
-        private static double RectSize = 5.0;
+
+        private int GridWidth => (int)(62.0 * Scale);
+        private int GridHeight => (int)(100.0 * Scale);
+
+        private Dictionary<(int x, int y), WorldTile> WorldTileTable = new Dictionary<(int x, int y), WorldTile>();
+        private List<PersonLocation> People = new List<PersonLocation>();
 
         public Map()
         {
@@ -52,8 +49,8 @@ namespace uk_500
 
         private (int x, int y) GetPersonTileIndex(PersonLocation person)
         {
-            return ((int)Math.Round(Remap(person.longitude, -7f, 2f, 0, (GridWidth - 1) * Scale)), 
-                (int)Math.Round(Remap(person.latitude, 50.0, 60.0, (GridHeight - 1) * Scale, 0)));
+            return ((int)Math.Round(Remap(person.longitude, -7f, 2f, 0, GridWidth - 1)), 
+                (int)Math.Round(Remap(person.latitude, 50.0, 60.0, GridHeight - 1, 0)));
         }
 
         public async Task RebuildMap()
@@ -63,30 +60,16 @@ namespace uk_500
 
             ClearMap();
 
+            /* TODO: This isn't working properly, figure out why! */
             foreach (var person in People)
             {
                 var index = GetPersonTileIndex(person);
 
-                long hashKey = (long)index.x << 32 | index.y & 0xFFFFFFFFL;
                 WorldTile tile;
-                if (!WorldTileTable.TryGetValue(hashKey, out tile))
+                if (!WorldTileTable.TryGetValue(index, out tile))
                 {
                     tile = new WorldTile();
-                    WorldTileTable.Add(hashKey, tile);
-                }
-
-                if (tile.RenderTile == null)
-                {
-                    tile.RenderTile = new Rectangle();
-                    tile.RenderTile.Height = RectSize / Scale;
-                    tile.RenderTile.Width = RectSize / Scale;
-                    tile.RenderTile.Fill = new SolidColorBrush(Colors.Red);
-                    
-                    Canvas.SetLeft(tile.RenderTile, 100 + index.x * RectSize / Scale);
-                    Canvas.SetTop(tile.RenderTile, 75 + index.y * RectSize / Scale);
-                    Canvas.SetZIndex(tile.RenderTile, -10);
-
-                    MapCanvas.Children.Add(tile.RenderTile);
+                    WorldTileTable.Add(index, tile);
                 }
 
                 tile.Density += 1;
@@ -98,29 +81,45 @@ namespace uk_500
                 return;
 
             /* Semi-ugly mix-code for displaying density scale */
-            int MaxDensity = WorldTileTable.Max(x => x.Value.Density);
-            int AvgDensity = (int)WorldTileTable.Average(x => x.Value.Density);
-            int MedianDensity = WorldTileTable.Values.OrderBy(x => x.Density).ToList().ElementAt(WorldTileTable.Count / 2).Density;
-
-            foreach (var tile in WorldTileTable)
             {
-                var PointColor = new Color();
-                PointColor.R = (byte)Remap(tile.Value.Density, 0, (MedianDensity + AvgDensity + MaxDensity) / 3, 0, 255);
-                PointColor.G = 0;
-                PointColor.B = 0;
-                PointColor.A = 255;
-                tile.Value.RenderTile.Fill = new SolidColorBrush(PointColor);
+                int MaxDensity = WorldTileTable.Max(x => x.Value.Density);
+                int AvgDensity = (int)WorldTileTable.Average(x => x.Value.Density);
+                int MedianDensity = WorldTileTable.Values.OrderBy(x => x.Density).ToList().ElementAt(WorldTileTable.Count / 2).Density;
+
+                WriteableBitmap bitmap = new WriteableBitmap(GridWidth, GridHeight, 0, 0, PixelFormats.Bgra32, null);
+                byte[,,] pixels = new byte[GridHeight, GridWidth, 4];
+
+                foreach (var tile in WorldTileTable)
+                {
+                    pixels[tile.Key.y, tile.Key.x, 2] = (byte)Remap(tile.Value.Density, 0, (MedianDensity + AvgDensity + MaxDensity) / 3, 0, 255);
+                    pixels[tile.Key.y, tile.Key.x, 3] = 255;
+                }
+
+                // Copy the data into a one-dimensional array.
+                byte[] pixels1d = new byte[GridHeight * GridWidth * 4];
+                int index = 0;
+                for (int row = 0; row < GridHeight; row++)
+                {
+                    for (int col = 0; col < GridWidth; col++)
+                    {
+                        for (int i = 0; i < 4; i++)
+                            pixels1d[index++] = pixels[row, col, i];
+                    }
+                }
+
+                // Update writeable bitmap with the colorArray to the image.
+                Int32Rect rect = new Int32Rect(0, 0, GridWidth, GridHeight);
+                int stride = 4 * GridWidth;
+                bitmap.WritePixels(rect, pixels1d, stride, 0);
+
+                //Set the Image source.
+                RenderImage.Source = bitmap;
             }
         }
 
         public void ClearMap()
         {
-            foreach (var worldTilePair in WorldTileTable)
-            {
-                if (worldTilePair.Value.RenderTile != null)
-                    MapCanvas.Children.Remove(worldTilePair.Value.RenderTile);
-            }
-
+            RenderImage.Source = null;
             WorldTileTable.Clear();
         }
 

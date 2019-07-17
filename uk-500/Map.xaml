@@ -10,7 +10,8 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Canvas x:Name="MapCanvas" Background="#FF89CDF3" Grid.ColumnSpan="2">
+        <Image x:Name="RenderImage" RenderOptions.BitmapScalingMode="NearestNeighbor" Margin="0"/>
+        <Canvas x:Name="MapCanvas" Grid.ColumnSpan="2">
             <Button x:Name="RefreshButton" Content="Refresh" Canvas.Left="196" Canvas.Top="12" Width="109" Height="21" Click="RefreshButton_Click"/>
             <Button Content="Calc Densest Area" Canvas.Left="196" Canvas.Top="42" Width="109" Height="21"/>
             <TextBox x:Name="ResolutionScale" HorizontalAlignment="Left" Height="21" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="80" Canvas.Left="114" Canvas.Top="12"/>
