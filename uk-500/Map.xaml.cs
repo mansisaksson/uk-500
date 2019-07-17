@@ -63,18 +63,20 @@ namespace uk_500
 
         public void RebuildMap()
         {
+            ClearMap();
+
+            if (People.Count < 2)
+                return;
+
             // Update member variables
             {
-                if (!double.TryParse(ResolutionScale.Text, out Scale))
-                    Scale = 1;
+                Scale = ResolutionSlider.Value / 100;
 
                 LngBounds.Min = People.Min(x => x.longitude);
                 LngBounds.Max = People.Max(x => x.longitude);
                 LatBounds.Min = People.Min(x => x.latitude);
                 LatBounds.Max = People.Max(x => x.latitude);
             }
-
-            ClearMap();
 
             foreach (var person in People)
             {
@@ -132,6 +134,7 @@ namespace uk_500
 
         public void ClearMap()
         {
+            LargestAreaSphere.Visibility = Visibility.Hidden;
             RenderImage.Source = null;
             WorldTileTable.Clear();
         }
@@ -230,27 +233,31 @@ namespace uk_500
         }
 
 
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        private void ApplyResButton_Click(object sender, RoutedEventArgs e)
         {
             RebuildMap();
         }
 
         private async void FindLargestArea_Click(object sender, RoutedEventArgs e)
         {
-            double Radius;
-            if (!double.TryParse(FindRadius.Text, out Radius))
-                Radius = 1;
+            double Radius = AreaRadiusSlider.Value;
 
             FindLargestArea.IsEnabled = false;
             var LargestAreaLocation = await Task.Run(() => { return FindLargestAreaInRadius(Radius); });
             FindLargestArea.IsEnabled = true;
 
+            LargestAreaSphere.Visibility = Visibility.Visible;
             LargestAreaSphere.Width = Radius;
             LargestAreaSphere.Height = Radius;
 
             var gridIndex = GetLngLatTileIndex(LargestAreaLocation);
             Canvas.SetLeft(LargestAreaSphere, ((float)gridIndex.x / GridWidth) * RenderImage.ActualWidth - LargestAreaSphere.Width / 2.0);
             Canvas.SetTop(LargestAreaSphere, ((float)gridIndex.y / GridHeight) * RenderImage.ActualHeight - LargestAreaSphere.Height / 2.0);
+        }
+
+        private void ResolutionSlider_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            RebuildMap();
         }
     }
 }

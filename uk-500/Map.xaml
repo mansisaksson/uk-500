@@ -12,17 +12,16 @@
         </Grid.ColumnDefinitions>
         <Image x:Name="RenderImage" RenderOptions.BitmapScalingMode="NearestNeighbor" HorizontalAlignment="Left"/>
         <Canvas x:Name="MapCanvas">
-            <Button x:Name="RefreshButton" Content="Refresh" Canvas.Left="196" Canvas.Top="12" Width="109" Height="21" Click="RefreshButton_Click"/>
-            <Button x:Name="FindLargestArea" Content="Calc Densest Area" Canvas.Left="196" Canvas.Top="42" Width="109" Height="21" Click="FindLargestArea_Click"/>
-            <TextBox x:Name="ResolutionScale" HorizontalAlignment="Left" Height="21" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="80" Canvas.Left="114" Canvas.Top="12"/>
-            <TextBox x:Name="FindRadius" HorizontalAlignment="Left" Height="21" TextWrapping="Wrap" Text="100" VerticalAlignment="Top" Width="80" Canvas.Left="114" Canvas.Top="42" RenderTransformOrigin="0.494,0.548"/>
+            <Button x:Name="FindLargestArea" Content="Calc Densest Area" Canvas.Left="350" Canvas.Top="41" Width="109" Height="21" Click="FindLargestArea_Click"/>
             <Label Content="Grid Resolution" Canvas.Top="10" Canvas.Left="15" Height="25" Width="94"/>
             <Label Content="Radius (KM)" Canvas.Top="38" Canvas.Left="34" Height="25" Width="75"/>
-            <Ellipse x:Name="LargestAreaSphere" Height="100" Width="100" Canvas.Left="133" Canvas.Top="232" RenderTransformOrigin="0.5,0.5">
+            <Ellipse x:Name="LargestAreaSphere" StrokeThickness="2" Visibility="Hidden" Height="100" Width="100" Canvas.Left="133" Canvas.Top="232" RenderTransformOrigin="0.5,0.5">
                 <Ellipse.Stroke>
-                    <SolidColorBrush x:Name="StrokeColor" Color="Red"/>
+                    <SolidColorBrush x:Name="StrokeColor" Color="Blue"/>
                 </Ellipse.Stroke>
             </Ellipse>
+            <Slider x:Name="ResolutionSlider" AutoToolTipPlacement="TopLeft" Canvas.Left="114" Canvas.Top="15" Height="20" Width="218" Maximum="500" Minimum="10" TickFrequency="10" Value="100" Thumb.DragCompleted="ResolutionSlider_DragCompleted"/>
+            <Slider x:Name="AreaRadiusSlider" AutoToolTipPlacement="TopLeft" Canvas.Left="114" Canvas.Top="41" Height="20" Width="218" Maximum="500" Minimum="10" TickFrequency="10" Value="100"/>
         </Canvas>
     </Grid>
 </UserControl>

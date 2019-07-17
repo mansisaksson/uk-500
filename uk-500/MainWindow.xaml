@@ -8,15 +8,19 @@
         Title="MainWindow" Height="720" Width="1280" ResizeMode="NoResize">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="0.2*" />
-            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="212*" />
+            <ColumnDefinition Width="553*" />
+            <ColumnDefinition Width="509*"/>
         </Grid.ColumnDefinitions>
+        <Border Grid.Column="1" BorderBrush="Black" BorderThickness="1,0,0,0" Background="{x:Null}" />
+        <Border Grid.Column="2" BorderBrush="Black" BorderThickness="1,0,0,0" Background="{x:Null}" />
+        
         <Button Grid.Column="0" x:Name="ImportCSV" Content="Import People CSV" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Top" Height="28" Click="ImportCSV_Click"/>
         <Button Grid.Column="0" x:Name="CrawlPostcodes" Content="Crawl Postcodes" HorizontalAlignment="Stretch" Margin="0,28,0,0" VerticalAlignment="Top" Height="28" Click="CrawlPostcodes_Click"/>
         <Button Grid.Column="0" x:Name="LoadMapData" Content="Load Map Data" HorizontalAlignment="Stretch" Margin="0,56,0,0" VerticalAlignment="Top" Height="28" Click="RunClustering_Click"/>
 
-        <local:Map x:Name="UKMap" Grid.Column="1" Margin="560,10,10,57"/>
-        <ListBox x:Name="DatabaseSelection" Grid.Column="0" Height="100" Margin="0,534,0,0" VerticalAlignment="Bottom" SelectionChanged="ListBox_SelectionChanged">
+        <local:Map x:Name="UKMap" Grid.Column="2" Margin="20"/>
+        <ListBox x:Name="DatabaseSelection" Grid.Column="0" Height="100" VerticalAlignment="Bottom" SelectionChanged="ListBox_SelectionChanged">
             <Label x:Name="UK500" Content="UK-500" Height="29" Width="194" HorizontalAlignment="Center" VerticalAlignment="Center" />
             <Label x:Name="UK10K" Content="UK-10K" Height="26" Width="193" />
             <Label x:Name="UK1M" Content="UK-1M" Height="26" Width="193" />
