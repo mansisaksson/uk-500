@@ -54,7 +54,7 @@ namespace uk_500
         {
             LoadMapData.IsEnabled = false;
             var people = await PeopleRepository.GetAllPeopleLocations();
-            UKMap.AddPeople(people);
+            UKMap.SetPeople(people);
             LoadMapData.IsEnabled = true;
         }
 

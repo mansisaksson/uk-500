@@ -29,13 +29,15 @@ namespace uk_500
 
     public partial class Map : UserControl
     {
-        private double Scale = 1.0;
-
         private int GridWidth => (int)Math.Floor(62.0 * Scale);
         private int GridHeight => (int)Math.Floor(100.0 * Scale);
 
         private Dictionary<(int x, int y), WorldTile> WorldTileTable = new Dictionary<(int x, int y), WorldTile>();
         private List<PersonLocation> People = new List<PersonLocation>();
+
+        private double Scale = 1.0;
+        private (double Min, double Max) LngBounds = (0, 0);
+        private (double Min, double Max) LatBounds = (0, 0);
 
         public Map()
         {
@@ -47,23 +49,36 @@ namespace uk_500
             return (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin;
         }
 
-        private (int x, int y) GetPersonTileIndex(PersonLocation person)
+        private (int x, int y) GetLngLatTileIndex((double lng, double lat) lngLat)
         {
-            /* TODO: Hard-coded max/min longitude and latitude, this breaks if we get values outside of this range */
-            return ((int)Math.Round(Remap(person.longitude, -8.0f, 2f, 0, GridWidth - 1)), 
-                (int)Math.Round(Remap(person.latitude, 49.0, 61.0, GridHeight - 1, 0)));
+            return ((int)Math.Round(Remap(lngLat.lng, LngBounds.Min, LngBounds.Max, 0, GridWidth - 1)), 
+                    (int)Math.Round(Remap(lngLat.lat, LatBounds.Min, LatBounds.Max, GridHeight - 1, 0)));
         }
 
-        public async Task RebuildMap()
+        private (double lng, double lat) GetTileLngLat((int x, int y) index)
         {
-            if (!double.TryParse(ResolutionScale.Text, out Scale))
-                Scale = 1;
+            return (Remap(index.x, 0, GridWidth - 1, LngBounds.Min, LngBounds.Max),
+                    Remap(index.y, 0, GridHeight - 1, LatBounds.Min, LatBounds.Max));
+        }
+
+        public void RebuildMap()
+        {
+            // Update member variables
+            {
+                if (!double.TryParse(ResolutionScale.Text, out Scale))
+                    Scale = 1;
+
+                LngBounds.Min = People.Min(x => x.longitude);
+                LngBounds.Max = People.Max(x => x.longitude);
+                LatBounds.Min = People.Min(x => x.latitude);
+                LatBounds.Max = People.Max(x => x.latitude);
+            }
 
             ClearMap();
 
             foreach (var person in People)
             {
-                var index = GetPersonTileIndex(person);
+                var index = GetLngLatTileIndex((person.longitude, person.latitude));
                 
                 WorldTile tile;
                 if (!WorldTileTable.TryGetValue(index, out tile))
@@ -91,7 +106,6 @@ namespace uk_500
 
                 foreach (var tile in WorldTileTable)
                 {
-                    Console.WriteLine($"X:{tile.Key.x}, Y:{tile.Key.y}");
                     pixels[tile.Key.x, tile.Key.y, 2] = (byte)Remap(tile.Value.Density, 0, (MedianDensity + AvgDensity + MaxDensity) / 3, 0, 255);
                     pixels[tile.Key.x, tile.Key.y, 3] = 255;
                 }
@@ -108,12 +122,10 @@ namespace uk_500
                     }
                 }
 
-                // Update writeable bitmap with the colorArray to the image.
                 Int32Rect rect = new Int32Rect(0, 0, GridWidth, GridHeight);
                 int stride = 4 * GridWidth;
                 bitmap.WritePixels(rect, pixels1d, stride, 0);
 
-                //Set the Image source.
                 RenderImage.Source = bitmap;
             }
         }
@@ -124,37 +136,121 @@ namespace uk_500
             WorldTileTable.Clear();
         }
 
-        public void AddPeople(List<PersonLocation> People)
+        public void SetPeople(List<PersonLocation> PeopleLocations)
         {
-            this.People = this.People.Union(People).ToList();
+            //this.People = this.People.Union(People).ToList();
+            People = PeopleLocations;
             RebuildMap();
         }
 
-        // Haversine distance stolen from: https://stackoverflow.com/questions/41621957/a-more-efficient-haversine-function
-        private static double HaversineDistance(double lat1, double lat2, double lon1, double lon2)
+        // Haversine distance stolen from: https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula
+        private static double HaversineDistance((double lon, double lat) A, (double lon, double lat) B)
         {
-            const double r = 6371000; // meters
-            var dlat = (lat2 - lat1) / 2;
-            var dlon = (lon2 - lon1) / 2;
+            var deg2rad = new Func<double, double>((double deg) =>  { return deg * (Math.PI / 180); });
 
-            var q = Math.Pow(Math.Sin(dlat), 2) + Math.Cos(lat1) * Math.Cos(lat2) * Math.Pow(Math.Sin(dlon), 2);
-            var c = 2 * Math.Atan2(Math.Sqrt(q), Math.Sqrt(1 - q));
-
-            var d = r * c;
-            return d / 1000;
+            var R = 6371; // Radius of the earth in km
+            var dLat = deg2rad(B.lat - A.lat);  // deg2rad below
+            var dLon = deg2rad(B.lon - A.lon);
+            var a =
+              Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+              Math.Cos(deg2rad(A.lat)) * Math.Cos(deg2rad(B.lat)) *
+              Math.Sin(dLon / 2) * Math.Sin(dLon / 2)
+              ;
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            var d = R * c; // Distance in km
+            return d;
         }
 
-        public async Task FindLargestCluster(float Location)
+        (double longitude, double latitude) FindLargestAreaInRadius(double radius)
         {
-            foreach (var person in People)
+            int LargestDensity = 0;
+            (double x, double y) LargestDensityLngLat = (0, 0);
+
+            for (int x = 0; x < GridWidth; x++)
             {
-                
+                for (int y = 0; y < GridHeight; y++)
+                {
+                    (double x, double y) tileCenter = new Func<(double x, double y)>(() =>
+                    {
+                        if (WorldTileTable.ContainsKey((x, y)))
+                            return (WorldTileTable[(x, y)].avgLng, WorldTileTable[(x, y)].avgLat);
+
+                        return GetTileLngLat((x, y));
+                    })();
+
+                    // TODO: We do a square search around the center which causes us to check a few irrelevant tiles
+                    // might be more optimal to search in a circular pattern.
+                    (int x, int y)[] searchDir = new (int x, int y)[]
+                    {
+                        (-1, 1),
+                        (0, 1),
+                        (1, 1),
+                        (-1, 0),
+                        (0, 1),
+                        (-1, -1),
+                        (0, -1),
+                        (1, -1)
+                    };
+
+                    int accumulatedDensity = 0;
+                    int count = 1;
+                    while (true)
+                    {
+                        bool isInsideRadius = false;
+                        foreach (var dir in searchDir)
+                        {
+                            (int x, int y) index = (x + dir.x * count, y + dir.y * count);
+                            if (WorldTileTable.ContainsKey(index))
+                            {
+                                var adjacentTile = WorldTileTable[(index.x, index.y)];
+                                (double x, double y) longLat = (adjacentTile.avgLng, adjacentTile.avgLat);
+                                if (HaversineDistance(tileCenter, longLat) <= radius)
+                                {
+                                    accumulatedDensity += adjacentTile.Density;
+                                    isInsideRadius = true;
+                                }
+                            }
+                        }
+
+                        if (!isInsideRadius)
+                            break;
+
+                        count++;
+                    }
+
+                    if (accumulatedDensity > LargestDensity)
+                    {
+                        LargestDensity = accumulatedDensity;
+                        LargestDensityLngLat = tileCenter;
+                    }
+                }
             }
+
+            return LargestDensityLngLat;
         }
+
 
         private void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
             RebuildMap();
+        }
+
+        private async void FindLargestArea_Click(object sender, RoutedEventArgs e)
+        {
+            double Radius;
+            if (!double.TryParse(FindRadius.Text, out Radius))
+                Radius = 1;
+
+            FindLargestArea.IsEnabled = false;
+            var LargestAreaLocation = await Task.Run(() => { return FindLargestAreaInRadius(Radius); });
+            FindLargestArea.IsEnabled = true;
+
+            LargestAreaSphere.Width = Radius;
+            LargestAreaSphere.Height = Radius;
+
+            var gridIndex = GetLngLatTileIndex(LargestAreaLocation);
+            Canvas.SetLeft(LargestAreaSphere, ((float)gridIndex.x / GridWidth) * RenderImage.ActualWidth - LargestAreaSphere.Width / 2.0);
+            Canvas.SetTop(LargestAreaSphere, ((float)gridIndex.y / GridHeight) * RenderImage.ActualHeight - LargestAreaSphere.Height / 2.0);
         }
     }
 }
