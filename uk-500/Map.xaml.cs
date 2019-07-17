@@ -31,8 +31,8 @@ namespace uk_500
     {
         private double Scale = 1.0;
 
-        private int GridWidth => (int)(62.0 * Scale);
-        private int GridHeight => (int)(100.0 * Scale);
+        private int GridWidth => (int)Math.Floor(62.0 * Scale);
+        private int GridHeight => (int)Math.Floor(100.0 * Scale);
 
         private Dictionary<(int x, int y), WorldTile> WorldTileTable = new Dictionary<(int x, int y), WorldTile>();
         private List<PersonLocation> People = new List<PersonLocation>();
@@ -49,8 +49,9 @@ namespace uk_500
 
         private (int x, int y) GetPersonTileIndex(PersonLocation person)
         {
-            return ((int)Math.Round(Remap(person.longitude, -7f, 2f, 0, GridWidth - 1)), 
-                (int)Math.Round(Remap(person.latitude, 50.0, 60.0, GridHeight - 1, 0)));
+            /* TODO: Hard-coded max/min longitude and latitude, this breaks if we get values outside of this range */
+            return ((int)Math.Round(Remap(person.longitude, -8.0f, 2f, 0, GridWidth - 1)), 
+                (int)Math.Round(Remap(person.latitude, 49.0, 61.0, GridHeight - 1, 0)));
         }
 
         public async Task RebuildMap()
@@ -60,11 +61,10 @@ namespace uk_500
 
             ClearMap();
 
-            /* TODO: This isn't working properly, figure out why! */
             foreach (var person in People)
             {
                 var index = GetPersonTileIndex(person);
-
+                
                 WorldTile tile;
                 if (!WorldTileTable.TryGetValue(index, out tile))
                 {
@@ -87,12 +87,13 @@ namespace uk_500
                 int MedianDensity = WorldTileTable.Values.OrderBy(x => x.Density).ToList().ElementAt(WorldTileTable.Count / 2).Density;
 
                 WriteableBitmap bitmap = new WriteableBitmap(GridWidth, GridHeight, 0, 0, PixelFormats.Bgra32, null);
-                byte[,,] pixels = new byte[GridHeight, GridWidth, 4];
+                byte[,,] pixels = new byte[GridWidth, GridHeight, 4];
 
                 foreach (var tile in WorldTileTable)
                 {
-                    pixels[tile.Key.y, tile.Key.x, 2] = (byte)Remap(tile.Value.Density, 0, (MedianDensity + AvgDensity + MaxDensity) / 3, 0, 255);
-                    pixels[tile.Key.y, tile.Key.x, 3] = 255;
+                    Console.WriteLine($"X:{tile.Key.x}, Y:{tile.Key.y}");
+                    pixels[tile.Key.x, tile.Key.y, 2] = (byte)Remap(tile.Value.Density, 0, (MedianDensity + AvgDensity + MaxDensity) / 3, 0, 255);
+                    pixels[tile.Key.x, tile.Key.y, 3] = 255;
                 }
 
                 // Copy the data into a one-dimensional array.
@@ -103,7 +104,7 @@ namespace uk_500
                     for (int col = 0; col < GridWidth; col++)
                     {
                         for (int i = 0; i < 4; i++)
-                            pixels1d[index++] = pixels[row, col, i];
+                            pixels1d[index++] = pixels[col, row, i];
                     }
                 }
 
