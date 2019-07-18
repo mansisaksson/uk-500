@@ -111,5 +111,67 @@ namespace uk_500.Database
                 return output.ToList();
             }
         }
+
+        public static async Task<string[]> GetFunStats()
+        {
+            List<Task<string>> statTasks = new List<Task<string>>();
+
+            // Get most common e-mail
+            statTasks.Add(Task.Run(() =>
+            {
+                using (var cnn = new SQLiteConnection(ConnectionString))
+                {
+                    var sql = @"SELECT substr(email, instr(email, '@') + 1) AS Domain, count(email) DomainCount
+                                FROM People
+                                WHERE length(email) > 0
+                                GROUP BY substr(email, instr(email, '@') + 1)
+                                ORDER BY DomainCount DESC
+                                LIMIT 3";
+                    var result = cnn.ExecuteReader(sql);
+                    string output = "The most common e-mail addresses in the UK are:\n";
+                    int count = 1;
+                    while (result.Read())
+                    {
+                        output += $"Nr {count}: {result["Domain"]}, Count {result["DomainCount"]}\n";
+                        count++;
+                    }
+                    return output;
+                }
+            }));
+
+
+            // Get most common names
+            statTasks.Add(Task.Run(() =>
+            {
+                using (var cnn = new SQLiteConnection(ConnectionString))
+                {
+                    var sql = @"SELECT first_name, count(first_name) NameCount
+                                FROM People
+                                WHERE length(first_name) > 0
+                                GROUP BY first_name
+                                ORDER BY NameCount DESC
+                                LIMIT 1";
+                    var result = cnn.ExecuteReader(sql);
+                    string firstNameStr = "";
+                    if (result.Read())
+                        firstNameStr = $"The most common name in the UK is {result["first_name"]}\n";
+
+                    sql = @"SELECT last_name, count(last_name) NameCount
+                                FROM People
+                                WHERE length(last_name) > 0
+                                GROUP BY last_name
+                                ORDER BY NameCount DESC
+                                LIMIT 1";
+                    result = cnn.ExecuteReader(sql);
+                    string lastNameStr = "";
+                    if (result.Read())
+                        lastNameStr = $"The most common surname in the UK is {result["last_name"]}\n";
+
+                    return firstNameStr + lastNameStr;
+                }
+            }));
+
+            return await Task.WhenAll(statTasks);
+        }
     }
 }

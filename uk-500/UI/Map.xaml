@@ -12,16 +12,21 @@
         </Grid.ColumnDefinitions>
         <Image x:Name="RenderImage" RenderOptions.BitmapScalingMode="NearestNeighbor" HorizontalAlignment="Left"/>
         <Canvas x:Name="MapCanvas">
-            <Button x:Name="FindLargestArea" Content="Calc Densest Area" Canvas.Left="350" Canvas.Top="41" Width="109" Height="21" Click="FindLargestArea_Click"/>
-            <Label Content="Grid Resolution" Canvas.Top="10" Canvas.Left="15" Height="25" Width="94"/>
-            <Label Content="Radius (KM)" Canvas.Top="38" Canvas.Left="34" Height="25" Width="75"/>
             <Ellipse x:Name="LargestAreaSphere" StrokeThickness="2" Visibility="Hidden" Height="100" Width="100" Canvas.Left="133" Canvas.Top="232" RenderTransformOrigin="0.5,0.5">
                 <Ellipse.Stroke>
                     <SolidColorBrush x:Name="StrokeColor" Color="Blue"/>
                 </Ellipse.Stroke>
             </Ellipse>
-            <Slider x:Name="ResolutionSlider" AutoToolTipPlacement="TopLeft" Canvas.Left="114" Canvas.Top="15" Height="20" Width="218" Maximum="500" Minimum="10" TickFrequency="10" Value="100" Thumb.DragCompleted="ResolutionSlider_DragCompleted"/>
-            <Slider x:Name="AreaRadiusSlider" AutoToolTipPlacement="TopLeft" Canvas.Left="114" Canvas.Top="41" Height="20" Width="218" Maximum="500" Minimum="10" TickFrequency="10" Value="100"/>
+
+            <Button x:Name="FindLargestArea" Content="Find Densest Area" Canvas.Right="15" Canvas.Top="68" Width="109" Height="21" Click="FindLargestArea_Click"/>
+            
+            <Label Content="Grid Resolution" Canvas.Top="10" Canvas.Right="230" Height="25" Width="94"/>
+            <Slider x:Name="ResolutionSlider" AutoToolTipPlacement="TopLeft" Canvas.Right="10" Canvas.Top="15" Height="20" Width="218" Maximum="500" Minimum="10" TickFrequency="10" Value="100" Thumb.DragCompleted="ResolutionSlider_DragCompleted"/>
+            
+            <Label Content="Radius (KM)" Canvas.Top="38" Canvas.Right="230" Height="25" Width="75"/>
+            <Slider x:Name="AreaRadiusSlider" AutoToolTipPlacement="TopLeft" Canvas.Right="10" Canvas.Top="41" Height="20" Width="218" Maximum="500" Minimum="10" TickFrequency="10" Value="100"/>
+            
+            <Button x:Name="LoadMap" Content="Load Map" Canvas.Bottom="10" Canvas.Right="10" Width="99" Height="26" Click="LoadMap_Click"/>
         </Canvas>
     </Grid>
 </UserControl>

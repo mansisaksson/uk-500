@@ -259,5 +259,13 @@ namespace uk_500
         {
             RebuildMap();
         }
+
+        private async void LoadMap_Click(object sender, RoutedEventArgs e)
+        {
+            LoadMap.IsEnabled = false;
+            var people = await PeopleRepository.GetAllPeopleLocations();
+            SetPeople(people);
+            LoadMap.IsEnabled = true;
+        }
     }
 }

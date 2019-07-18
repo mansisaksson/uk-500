@@ -49,14 +49,6 @@ namespace uk_500
             await PostcodesCrawler.StartCrawler();
             CrawlPostcodes.IsEnabled = true;
         }
-        
-        private async void RunClustering_Click(object sender, RoutedEventArgs e)
-        {
-            LoadMapData.IsEnabled = false;
-            var people = await PeopleRepository.GetAllPeopleLocations();
-            UKMap.SetPeople(people);
-            LoadMapData.IsEnabled = true;
-        }
 
         private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
