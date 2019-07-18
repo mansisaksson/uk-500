@@ -63,6 +63,18 @@ namespace uk_500.Database
             }
         }
 
+        public static async Task<List<PersonModel>> FindPeopleByName(string FirstName, string LastName, int Limit)
+        {
+            using (var cnn = new SQLiteConnection(ConnectionString))
+            {
+                var output = await cnn.QueryAsync<PersonModel>(
+                    "SELECT * FROM People WHERE first_name LIKE '%'|| @first_name || '%' AND last_name LIKE '%' || @last_name || '%' LIMIT @limit",
+                    new { first_name = FirstName, last_name = LastName, limit = Limit }
+                );
+                return output.ToList();
+            }
+        }
+
         public static IEnumerable<List<T>> SplitList<T>(List<T> locations, int nSize)
         {
             for (int i = 0; i < locations.Count; i += nSize)
@@ -96,6 +108,36 @@ namespace uk_500.Database
                 cnn.Open();
                 var trans = cnn.BeginTransaction();
                 await cnn.ExecuteAsync($"INSERT INTO People {valuesString(false)} VALUES {valuesString(true)}", People, transaction: trans);
+                trans.Commit();
+
+                Console.WriteLine("Done.");
+            }
+        }
+
+        public static async Task UpdatePeople(List<PersonModel> People)
+        {
+            using (var cnn = new SQLiteConnection(ConnectionString))
+            {
+                Console.WriteLine($"Updating {People.Count} people...");
+
+                var valuesString = new Func<string>(() =>
+                {
+                    var PropertiesList = typeof(PersonModel).GetProperties().OrderBy(x => x.MetadataToken);
+
+                    string buildingString = "";
+                    foreach (var name in PropertiesList.Select(x => x.Name))
+                    {
+                        if (name == "uid")
+                            continue;
+                        buildingString += $"{name} = @{name}, ";
+                    }
+                    buildingString = buildingString.TrimEnd(new char[] { ',', ' ' });
+                    return buildingString;
+                });
+
+                cnn.Open();
+                var trans = cnn.BeginTransaction();
+                await cnn.ExecuteAsync($"UPDATE People SET {valuesString()} WHERE uid = @uid", People, transaction: trans);
                 trans.Commit();
 
                 Console.WriteLine("Done.");

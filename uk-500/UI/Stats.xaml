@@ -11,8 +11,8 @@
             <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="0.1*"/>
-            <RowDefinition Height="1*"/>
+            <RowDefinition Height="17*"/>
+            <RowDefinition Height="133*"/>
         </Grid.RowDefinitions>
         <Button Grid.Row="0" x:Name="GetStatsButton" Click="GetStatsButton_Click">Get Fun Stats</Button>
         <ListBox x:Name="StatsListBox" Grid.Row="1" IsHitTestVisible="False">

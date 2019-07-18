@@ -20,10 +20,10 @@
 
             <Button x:Name="FindLargestArea" Content="Find Densest Area" Canvas.Right="15" Canvas.Top="68" Width="109" Height="21" Click="FindLargestArea_Click"/>
             
-            <Label Content="Grid Resolution" Canvas.Top="10" Canvas.Right="230" Height="25" Width="94"/>
+            <Label Content="Grid Resolution" Canvas.Top="10" Canvas.Right="230" Height="25" Width="94" Background="#FFECEAEA"/>
             <Slider x:Name="ResolutionSlider" AutoToolTipPlacement="TopLeft" Canvas.Right="10" Canvas.Top="15" Height="20" Width="218" Maximum="500" Minimum="10" TickFrequency="10" Value="100" Thumb.DragCompleted="ResolutionSlider_DragCompleted"/>
             
-            <Label Content="Radius (KM)" Canvas.Top="38" Canvas.Right="230" Height="25" Width="75"/>
+            <Label Content="Radius (KM)" Canvas.Top="38" Canvas.Right="230" Height="25" Width="75" Background="#FFE2E2E2"/>
             <Slider x:Name="AreaRadiusSlider" AutoToolTipPlacement="TopLeft" Canvas.Right="10" Canvas.Top="41" Height="20" Width="218" Maximum="500" Minimum="10" TickFrequency="10" Value="100"/>
             
             <Button x:Name="LoadMap" Content="Load Map" Canvas.Bottom="10" Canvas.Right="10" Width="99" Height="26" Click="LoadMap_Click"/>
