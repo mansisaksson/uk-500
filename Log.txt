@@ -1,5 +1,0 @@
-
-NuGet Packages:
-
-System.Data.SQLite.Core
-Dapper
