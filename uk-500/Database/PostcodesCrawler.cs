@@ -27,8 +27,9 @@ namespace uk_500.Database
     }
 
     /* 
-     * The idea here is to create a crawler that scrapes the postcode data and places it
-     * in a seperate table. This data is not likley to change and multiple people might share the same postcode.
+     * The idea here is to create a crawler that scrapes the postcode data and places it in a seperate table. 
+     * This data is not likley to change and multiple people might even share the same postcode.
+     * It is much more efficient to fetch this data locally, rather than having to ask an external API for the data.
      */
     class PostcodesCrawler
     {
@@ -87,10 +88,9 @@ namespace uk_500.Database
         public static async Task StartCrawler()
         {
             /*
-             * TODO: This works quite well for 500ish but I doubt it would be a good idea not to
-             * add a delay of some sort inbetween the different HTTP reqests
+             * Split up the HTTP requests to 5 at a time with 100 postcodes per request.
              */
-            var postalList = await PostcodeRepository.GetNewPostcodes();
+            var postalList = await PostcodeRepository.GetNewPostcodes(); // Only returns postcodes that does not already exsist locally
             var BufferedLists = SplitList(postalList, 100).ToList();
 
             int requestBatchSize = 5;

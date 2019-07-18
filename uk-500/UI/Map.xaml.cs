@@ -78,6 +78,10 @@ namespace uk_500
                 LatBounds.Max = People.Max(x => x.latitude);
             }
 
+            /*
+             * A form of "Bucket Sort" where we place people geographically to each other in the same bucket.
+             * We also pre-calculate the avarage location and density of the buckets.
+             */
             foreach (var person in People)
             {
                 var index = GetLngLatTileIndex((person.longitude, person.latitude));
@@ -97,7 +101,7 @@ namespace uk_500
             if (WorldTileTable.Count < 2)
                 return;
 
-            /* Semi-ugly mix-code for displaying density scale */
+            /* Semi-ugly code for displaying density scale */
             {
                 int MaxDensity = WorldTileTable.Max(x => x.Value.Density);
                 int AvgDensity = (int)WorldTileTable.Average(x => x.Value.Density);
@@ -141,7 +145,6 @@ namespace uk_500
 
         public void SetPeople(List<PersonLocation> PeopleLocations)
         {
-            //this.People = this.People.Union(People).ToList();
             People = PeopleLocations;
             RebuildMap();
         }
@@ -164,6 +167,16 @@ namespace uk_500
             return d;
         }
 
+        /*
+         * Algorithm for finding the most densely populated area, based on our data.
+         * 
+         * Since we've pre-sorted our data we can quite easily loop through and find the tile with the highest density tiles
+         * surrounding it. The higher resolution we have on our grid (number of tiles) the more accurate out result will be, in exchange for performance.
+         * 
+         * Increasing the search radius will also reduce performance as we have to check more surrounding tiles.
+         * 
+         * The strength of this algorithm is that it scales incredibly well with large data sets, at the cost of some accuracy.
+         */
         (double longitude, double latitude) FindLargestAreaInRadius(double radius)
         {
             int LargestDensity = 0;
