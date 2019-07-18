@@ -71,10 +71,6 @@ namespace uk_500.Database
             }
         }
 
-        /*
-         * TODO: There exists a bulk insert package that could be useful here
-         * This is reasonably fast however so probably not needed, unless really slow on large data-sets.
-         */
         public static async Task InsertPeople(List<PersonModel> People)
         {
             using (var cnn = new SQLiteConnection(ConnectionString))
